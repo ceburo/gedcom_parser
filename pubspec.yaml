@@ -1,0 +1,17 @@
+name: gedcom_parser
+description: A standalone GEDCOM parser and exporter for Dart, supporting GEDCOM 5.5.1 and 7.0.
+version: 0.0.1
+homepage: https://github.com/ceburo/ages/tree/main/packages/gedcom_parser
+repository: https://github.com/ceburo/ages
+issue_tracker: https://github.com/ceburo/ages/issues
+
+environment:
+  sdk: ">=3.0.0 <4.0.0"
+
+dependencies:
+  equatable: ^2.0.5
+  intl: ^0.20.2
+
+dev_dependencies:
+  test: ^1.24.0
+  lints: ^3.0.0
