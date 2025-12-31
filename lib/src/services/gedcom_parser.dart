@@ -1,3 +1,4 @@
+import 'package:gedcom_parser/src/entities/shared_note.dart';
 import 'package:gedcom_parser/src/entities/family.dart';
 import 'package:gedcom_parser/src/entities/gedcom_data.dart';
 import 'package:gedcom_parser/src/entities/gedcom_node.dart';
@@ -6,6 +7,7 @@ import 'package:gedcom_parser/src/entities/person.dart';
 import 'package:gedcom_parser/src/entities/repository.dart';
 import 'package:gedcom_parser/src/entities/source.dart';
 import 'package:gedcom_parser/src/entities/source_citation.dart';
+import 'package:gedcom_parser/src/utils/gedcom_string_utils.dart';
 
 /// A service for parsing GEDCOM files into structured [GedcomData].
 class GedcomParser {
@@ -21,23 +23,27 @@ class GedcomParser {
     final sources = <String, Source>{};
     final repositories = <String, Repository>{};
     final media = <String, Media>{};
+    final sharedNotes = <String, SharedNote>{};
     final childToFamilyId = <String, String>{};
 
     for (final node in nodes) {
-      if (node.tag == "INDI" && node.xref != null) {
-        persons[node.xref!] = _parsePerson(node);
-      } else if (node.tag == "FAM" && node.xref != null) {
+      final xref = GedcomStringUtils.unescapePointer(node.xref);
+      if (node.tag == "INDI" && xref != null) {
+        persons[xref] = _parsePerson(node);
+      } else if (node.tag == "FAM" && xref != null) {
         final family = _parseFamily(node);
-        families[node.xref!] = family;
+        families[xref] = family;
         for (final childId in family.childrenIds) {
-          childToFamilyId[childId] = node.xref!;
+          childToFamilyId[childId] = xref;
         }
-      } else if (node.tag == "SOUR" && node.xref != null) {
-        sources[node.xref!] = _parseSource(node);
-      } else if (node.tag == "REPO" && node.xref != null) {
-        repositories[node.xref!] = _parseRepository(node);
-      } else if (node.tag == "OBJE" && node.xref != null) {
-        media[node.xref!] = _parseMedia(node);
+      } else if (node.tag == "SOUR" && xref != null) {
+        sources[xref] = _parseSource(node);
+      } else if (node.tag == "REPO" && xref != null) {
+        repositories[xref] = _parseRepository(node);
+      } else if (node.tag == "OBJE" && xref != null) {
+        media[xref] = _parseMedia(node);
+      } else if (node.tag == "SNOTE" && xref != null) {
+        sharedNotes[xref] = _parseSharedNote(node);
       }
     }
 
@@ -47,8 +53,17 @@ class GedcomParser {
       sources: sources,
       repositories: repositories,
       media: media,
+      sharedNotes: sharedNotes,
       childToFamilyId: childToFamilyId,
       nodes: nodes,
+    );
+  }
+
+  SharedNote _parseSharedNote(GedcomNode node) {
+    return SharedNote(
+      id: GedcomStringUtils.unescapePointer(node.xref)!,
+      text: node.valueWithChildren,
+      nodes: node.children,
     );
   }
 
@@ -72,15 +87,9 @@ class GedcomParser {
       }
 
       final level = int.parse(match.group(1)!);
-      var xref = match.group(2);
-      if (xref != null && xref.startsWith("@") && xref.endsWith("@")) {
-        xref = xref.substring(1, xref.length - 1);
-      }
+      final xref = match.group(2);
       final tag = match.group(3)!;
-      var value = match.group(4);
-      if (value != null && value.startsWith("@") && value.endsWith("@")) {
-        value = value.substring(1, value.length - 1);
-      }
+      final value = match.group(4);
 
       final node = _MutableGedcomNode(level, tag, value, xref);
 
@@ -103,8 +112,9 @@ class GedcomParser {
   }
 
   Person _parsePerson(GedcomNode node) {
-    var firstName = "";
-    var lastName = "";
+    String? firstName;
+    String? lastName;
+    String? rawName;
     String? middleNames;
     String? nickname;
     String? alias;
@@ -116,7 +126,9 @@ class GedcomParser {
     String? burialDate;
     String? burialPlace;
     String? occupation;
+    String? suffix;
     final notes = <String>[];
+    final sharedNoteIds = <String>[];
     final birthSources = <SourceCitation>[];
     final deathSources = <SourceCitation>[];
     final burialSources = <SourceCitation>[];
@@ -125,15 +137,21 @@ class GedcomParser {
     for (final child in node.children) {
       switch (child.tag) {
         case "NAME":
-          final val = child.valueWithChildren;
+          if (rawName != null) break;
+          rawName = child.valueWithChildren;
+          final val = rawName;
           if (val.contains("/")) {
             final parts = val.split("/");
             firstName = parts[0].trim();
             if (parts.length > 1) {
               lastName = parts[1].trim();
             }
+            if (parts.length > 2) {
+              suffix = parts[2].trim();
+            }
           } else {
             firstName = val;
+            lastName = "";
           }
 
           // Try to get more specific name parts if available
@@ -151,17 +169,28 @@ class GedcomParser {
             if (sub.tag == "SURN") {
               lastName = sub.valueWithChildren;
             }
+            if (sub.tag == "NSFX") {
+              suffix = sub.valueWithChildren;
+            }
           }
+          break;
         case "NICK":
+          if (nickname != null) break;
           nickname = child.valueWithChildren;
+          break;
         case "ALIA":
+          if (alias != null) break;
           alias = child.valueWithChildren;
+          break;
         case "SEX":
-          sex = child.value;
+          if (sex != null) break;
+          sex = GedcomStringUtils.unescapeText(child.value);
+          break;
         case "BIRT":
+          if (birthDate != null || birthPlace != null) break;
           for (final sub in child.children) {
             if (sub.tag == "DATE") {
-              birthDate = sub.value;
+              birthDate = GedcomStringUtils.unescapeText(sub.value);
             }
             if (sub.tag == "PLAC") {
               birthPlace = sub.valueWithChildren;
@@ -170,10 +199,12 @@ class GedcomParser {
               birthSources.add(_parseSourceCitation(sub));
             }
           }
+          break;
         case "DEAT":
+          if (deathDate != null || deathPlace != null) break;
           for (final sub in child.children) {
             if (sub.tag == "DATE") {
-              deathDate = sub.value;
+              deathDate = GedcomStringUtils.unescapeText(sub.value);
             }
             if (sub.tag == "PLAC") {
               deathPlace = sub.valueWithChildren;
@@ -182,10 +213,12 @@ class GedcomParser {
               deathSources.add(_parseSourceCitation(sub));
             }
           }
+          break;
         case "BURI":
+          if (burialDate != null || burialPlace != null) break;
           for (final sub in child.children) {
             if (sub.tag == "DATE") {
-              burialDate = sub.value;
+              burialDate = GedcomStringUtils.unescapeText(sub.value);
             }
             if (sub.tag == "PLAC") {
               burialPlace = sub.valueWithChildren;
@@ -194,21 +227,32 @@ class GedcomParser {
               burialSources.add(_parseSourceCitation(sub));
             }
           }
+          break;
         case "OCCU":
+          if (occupation != null) break;
           occupation = child.valueWithChildren;
+          break;
         case "NOTE":
           notes.add(child.valueWithChildren);
+          break;
+        case "SNOTE":
+          if (child.value != null) {
+            sharedNoteIds.add(GedcomStringUtils.unescapePointer(child.value)!);
+          }
+          break;
         case "OBJE":
           if (child.value != null) {
-            mediaIds.add(child.value!);
+            mediaIds.add(GedcomStringUtils.unescapePointer(child.value)!);
           }
+          break;
       }
     }
 
     return Person(
-      id: node.xref!,
-      firstName: firstName,
-      lastName: lastName,
+      id: GedcomStringUtils.unescapePointer(node.xref)!,
+      firstName: firstName ?? "",
+      lastName: lastName ?? "",
+      rawName: rawName,
       middleNames: middleNames,
       nickname: nickname,
       alias: alias,
@@ -220,7 +264,9 @@ class GedcomParser {
       burialDate: burialDate,
       burialPlace: burialPlace,
       occupation: occupation,
+      suffix: suffix,
       notes: notes,
+      sharedNoteIds: sharedNoteIds,
       birthSources: birthSources,
       deathSources: deathSources,
       burialSources: burialSources,
@@ -236,23 +282,28 @@ class GedcomParser {
     String? marriageDate;
     String? marriagePlace;
     final notes = <String>[];
+    final sharedNoteIds = <String>[];
     final marriageSources = <SourceCitation>[];
     final mediaIds = <String>[];
 
     for (final child in node.children) {
       switch (child.tag) {
         case "HUSB":
-          husbandId = child.value;
+          husbandId = GedcomStringUtils.unescapePointer(child.value);
+          break;
         case "WIFE":
-          wifeId = child.value;
+          wifeId = GedcomStringUtils.unescapePointer(child.value);
+          break;
         case "CHIL":
           if (child.value != null) {
-            childrenIds.add(child.value!);
+            childrenIds.add(GedcomStringUtils.unescapePointer(child.value)!);
           }
+          break;
         case "MARR":
+          if (marriageDate != null || marriagePlace != null) break;
           for (final sub in child.children) {
             if (sub.tag == "DATE") {
-              marriageDate = sub.value;
+              marriageDate = GedcomStringUtils.unescapeText(sub.value);
             }
             if (sub.tag == "PLAC") {
               marriagePlace = sub.valueWithChildren;
@@ -261,23 +312,32 @@ class GedcomParser {
               marriageSources.add(_parseSourceCitation(sub));
             }
           }
+          break;
         case "NOTE":
           notes.add(child.valueWithChildren);
+          break;
+        case "SNOTE":
+          if (child.value != null) {
+            sharedNoteIds.add(GedcomStringUtils.unescapePointer(child.value)!);
+          }
+          break;
         case "OBJE":
           if (child.value != null) {
-            mediaIds.add(child.value!);
+            mediaIds.add(GedcomStringUtils.unescapePointer(child.value)!);
           }
+          break;
       }
     }
 
     return Family(
-      id: node.xref!,
+      id: GedcomStringUtils.unescapePointer(node.xref)!,
       husbandId: husbandId,
       wifeId: wifeId,
       childrenIds: childrenIds,
       marriageDate: marriageDate,
       marriagePlace: marriagePlace,
       notes: notes,
+      sharedNoteIds: sharedNoteIds,
       marriageSources: marriageSources,
       mediaIds: mediaIds,
       nodes: node.children,
@@ -290,28 +350,51 @@ class GedcomParser {
     String? publicationInfo;
     String? repositoryId;
     String? text;
+    final notes = <String>[];
+    final sharedNoteIds = <String>[];
 
     for (final child in node.children) {
       switch (child.tag) {
         case "TITL":
+          if (title.isNotEmpty) break;
           title = child.valueWithChildren;
+          break;
         case "AUTH":
+          if (author != null) break;
           author = child.valueWithChildren;
+          break;
         case "PUBL":
+          if (publicationInfo != null) break;
           publicationInfo = child.valueWithChildren;
+          break;
         case "REPO":
+          if (repositoryId != null) break;
           repositoryId = child.value;
+          break;
         case "TEXT":
+          if (text != null) break;
           text = child.valueWithChildren;
+          break;
+        case "NOTE":
+          notes.add(child.valueWithChildren);
+          break;
+        case "SNOTE":
+          if (child.value != null) {
+            sharedNoteIds.add(GedcomStringUtils.unescapePointer(child.value)!);
+          }
+          break;
       }
     }
     return Source(
-      id: node.xref!,
+      id: GedcomStringUtils.unescapePointer(node.xref)!,
       title: title,
       author: author,
       publicationInfo: publicationInfo,
-      repositoryId: repositoryId,
+      repositoryId: GedcomStringUtils.unescapePointer(repositoryId),
       text: text,
+      notes: notes,
+      sharedNoteIds: sharedNoteIds,
+      nodes: node.children,
     );
   }
 
@@ -321,64 +404,101 @@ class GedcomParser {
     String? phone;
     String? email;
     String? website;
+    final notes = <String>[];
+    final sharedNoteIds = <String>[];
 
     for (final child in node.children) {
       switch (child.tag) {
         case "NAME":
           name = child.valueWithChildren;
+          break;
         case "ADDR":
+          if (address != null) break;
           address = child.valueWithChildren;
+          break;
         case "PHON":
-          phone = child.value;
+          if (phone != null) break;
+          phone = GedcomStringUtils.unescapeText(child.value);
+          break;
         case "EMAIL":
-          email = child.value;
+          if (email != null) break;
+          email = GedcomStringUtils.unescapeText(child.value);
+          break;
         case "WWW":
-          website = child.value;
+          if (website != null) break;
+          website = GedcomStringUtils.unescapeText(child.value);
+          break;
+        case "NOTE":
+          notes.add(child.valueWithChildren);
+          break;
+        case "SNOTE":
+          if (child.value != null) {
+            sharedNoteIds.add(GedcomStringUtils.unescapePointer(child.value)!);
+          }
+          break;
       }
     }
     return Repository(
-      id: node.xref!,
+      id: GedcomStringUtils.unescapePointer(node.xref)!,
       name: name,
       address: address,
       phone: phone,
       email: email,
       website: website,
+      notes: notes,
+      sharedNoteIds: sharedNoteIds,
+      nodes: node.children,
     );
   }
 
   Media _parseMedia(GedcomNode node) {
-    var path = "";
+    final files = <MediaFile>[];
     String? title;
-    String? format;
-    String? description;
     String? blobData;
+    final notes = <String>[];
+    final sharedNoteIds = <String>[];
 
     for (final child in node.children) {
       switch (child.tag) {
         case "FILE":
-          path = child.value ?? "";
+          final path = GedcomStringUtils.unescapeText(child.value) ?? "";
+          String? format;
+          for (final sub in child.children) {
+            if (sub.tag == "FORM") {
+              format = GedcomStringUtils.unescapeText(sub.value);
+            }
+          }
+          files.add(MediaFile(path: path, format: format));
+          break;
         case "TITL":
           title = child.valueWithChildren;
-        case "FORM":
-          format = child.value;
+          break;
         case "NOTE":
-          description = child.valueWithChildren;
+          notes.add(child.valueWithChildren);
+          break;
+        case "SNOTE":
+          if (child.value != null) {
+            sharedNoteIds.add(GedcomStringUtils.unescapePointer(child.value)!);
+          }
+          break;
         case "BLOB":
           blobData = child.valueWithChildren;
+          break;
       }
     }
     return Media(
-      id: node.xref!,
-      path: path,
+      id: GedcomStringUtils.unescapePointer(node.xref)!,
+      files: files,
       title: title,
-      format: format,
-      description: description,
+      notes: notes,
+      sharedNoteIds: sharedNoteIds,
       blobData: blobData,
+      nodes: node.children,
     );
   }
 
   SourceCitation _parseSourceCitation(GedcomNode node) {
-    final sourceId = node.value ?? "";
+    final sourceId = GedcomStringUtils.unescapePointer(node.value) ?? "";
     String? page;
     String? quality;
     String? text;
@@ -388,18 +508,22 @@ class GedcomParser {
       switch (child.tag) {
         case "PAGE":
           page = child.valueWithChildren;
+          break;
         case "QUAY":
-          quality = child.value;
+          quality = GedcomStringUtils.unescapeText(child.value);
+          break;
         case "DATA":
           for (final sub in child.children) {
             if (sub.tag == "TEXT") {
               text = sub.valueWithChildren;
             }
           }
+          break;
         case "OBJE":
           if (child.value != null) {
-            mediaIds.add(child.value!);
+            mediaIds.add(GedcomStringUtils.unescapePointer(child.value)!);
           }
+          break;
       }
     }
     return SourceCitation(

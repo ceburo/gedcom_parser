@@ -16,6 +16,9 @@ class Person extends Equatable {
   /// The person's last name (surname).
   final String lastName;
 
+  /// The person's full name as it appears in the GEDCOM file.
+  final String? rawName;
+
   /// The person's nickname.
   final String? nickname;
 
@@ -43,11 +46,17 @@ class Person extends Equatable {
   /// The person's occupation or profession.
   final String? occupation;
 
+  /// The person's name suffix (e.g., Jr., III).
+  final String? suffix;
+
   /// Biological sex: "M" (Male), "F" (Female), or "U" (Unknown).
   final String sex;
 
   /// List of notes associated with this person.
   final List<String> notes;
+
+  /// List of shared note IDs associated with this person.
+  final List<String> sharedNoteIds;
 
   /// List of source citations for the birth event.
   final List<SourceCitation> birthSources;
@@ -75,6 +84,7 @@ class Person extends Equatable {
     required this.id,
     required this.firstName,
     required this.lastName,
+    this.rawName,
     this.middleNames,
     this.nickname,
     this.alias,
@@ -85,8 +95,10 @@ class Person extends Equatable {
     this.burialDate,
     this.burialPlace,
     this.occupation,
+    this.suffix,
     this.sex = "U",
     this.notes = const [],
+    this.sharedNoteIds = const [],
     this.birthSources = const [],
     this.deathSources = const [],
     this.burialSources = const [],
@@ -98,6 +110,7 @@ class Person extends Equatable {
     String? id,
     String? firstName,
     String? lastName,
+    String? rawName,
     String? middleNames,
     String? nickname,
     String? alias,
@@ -108,8 +121,10 @@ class Person extends Equatable {
     String? burialDate,
     String? burialPlace,
     String? occupation,
+    String? suffix,
     String? sex,
     List<String>? notes,
+    List<String>? sharedNoteIds,
     List<SourceCitation>? birthSources,
     List<SourceCitation>? deathSources,
     List<SourceCitation>? burialSources,
@@ -120,6 +135,7 @@ class Person extends Equatable {
         id: id ?? this.id,
         firstName: firstName ?? this.firstName,
         lastName: lastName ?? this.lastName,
+        rawName: rawName ?? this.rawName,
         middleNames: middleNames ?? this.middleNames,
         nickname: nickname ?? this.nickname,
         alias: alias ?? this.alias,
@@ -130,8 +146,10 @@ class Person extends Equatable {
         burialDate: burialDate ?? this.burialDate,
         burialPlace: burialPlace ?? this.burialPlace,
         occupation: occupation ?? this.occupation,
+        suffix: suffix ?? this.suffix,
         sex: sex ?? this.sex,
         notes: notes ?? this.notes,
+        sharedNoteIds: sharedNoteIds ?? this.sharedNoteIds,
         birthSources: birthSources ?? this.birthSources,
         deathSources: deathSources ?? this.deathSources,
         burialSources: burialSources ?? this.burialSources,
@@ -144,6 +162,7 @@ class Person extends Equatable {
         'firstName': firstName,
         'middleNames': middleNames,
         'lastName': lastName,
+        'rawName': rawName,
         'nickname': nickname,
         'alias': alias,
         'birthDate': birthDate,
@@ -153,6 +172,7 @@ class Person extends Equatable {
         'burialDate': burialDate,
         'burialPlace': burialPlace,
         'occupation': occupation,
+        'suffix': suffix,
         'sex': sex,
         'notes': notes,
         'birthSources': birthSources.map((s) => s.toJson()).toList(),
@@ -167,6 +187,7 @@ class Person extends Equatable {
         firstName: json['firstName'] as String,
         middleNames: json['middleNames'] as String?,
         lastName: json['lastName'] as String,
+        rawName: json['rawName'] as String?,
         nickname: json['nickname'] as String?,
         alias: json['alias'] as String?,
         birthDate: json['birthDate'] as String?,
@@ -176,6 +197,7 @@ class Person extends Equatable {
         burialDate: json['burialDate'] as String?,
         burialPlace: json['burialPlace'] as String?,
         occupation: json['occupation'] as String?,
+        suffix: json['suffix'] as String?,
         sex: json['sex'] as String? ?? "U",
         notes: List<String>.from(json['notes'] as List),
         birthSources: (json['birthSources'] as List)
@@ -251,6 +273,7 @@ class Person extends Equatable {
         id,
         firstName,
         lastName,
+        rawName,
         middleNames,
         nickname,
         alias,
@@ -261,6 +284,7 @@ class Person extends Equatable {
         burialDate,
         burialPlace,
         occupation,
+        suffix,
         sex,
         notes,
         birthSources,

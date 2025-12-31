@@ -1,4 +1,5 @@
 import 'package:equatable/equatable.dart';
+import 'package:gedcom_parser/src/entities/gedcom_node.dart';
 
 /// Represents a source (SOUR) of information.
 class Source extends Equatable {
@@ -8,6 +9,11 @@ class Source extends Equatable {
   final String? publicationInfo;
   final String? repositoryId;
   final String? text; // Transcription
+  final List<String> notes;
+  final List<String> sharedNoteIds;
+
+  /// The raw GEDCOM nodes for this source.
+  final List<GedcomNode> nodes;
 
   const Source({
     required this.id,
@@ -16,6 +22,9 @@ class Source extends Equatable {
     this.publicationInfo,
     this.repositoryId,
     this.text,
+    this.notes = const [],
+    this.sharedNoteIds = const [],
+    this.nodes = const [],
   });
 
   @override
@@ -26,6 +35,9 @@ class Source extends Equatable {
         publicationInfo,
         repositoryId,
         text,
+        notes,
+        sharedNoteIds,
+        nodes,
       ];
 
   Source copyWith({
@@ -35,6 +47,9 @@ class Source extends Equatable {
     String? publicationInfo,
     String? repositoryId,
     String? text,
+    List<String>? notes,
+    List<String>? sharedNoteIds,
+    List<GedcomNode>? nodes,
   }) =>
       Source(
         id: id ?? this.id,
@@ -43,6 +58,9 @@ class Source extends Equatable {
         publicationInfo: publicationInfo ?? this.publicationInfo,
         repositoryId: repositoryId ?? this.repositoryId,
         text: text ?? this.text,
+        notes: notes ?? this.notes,
+        sharedNoteIds: sharedNoteIds ?? this.sharedNoteIds,
+        nodes: nodes ?? this.nodes,
       );
 
   Map<String, dynamic> toJson() => {
@@ -52,6 +70,8 @@ class Source extends Equatable {
         'publicationInfo': publicationInfo,
         'repositoryId': repositoryId,
         'text': text,
+        'notes': notes,
+        'sharedNoteIds': sharedNoteIds,
       };
 
   factory Source.fromJson(Map<String, dynamic> json) => Source(
@@ -61,5 +81,8 @@ class Source extends Equatable {
         publicationInfo: json['publicationInfo'] as String?,
         repositoryId: json['repositoryId'] as String?,
         text: json['text'] as String?,
+        notes: (json['notes'] as List<dynamic>?)?.cast<String>() ?? [],
+        sharedNoteIds:
+            (json['sharedNoteIds'] as List<dynamic>?)?.cast<String>() ?? [],
       );
 }

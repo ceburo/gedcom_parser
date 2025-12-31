@@ -1,3 +1,11 @@
+## 0.0.6
+
+* Full GEDCOM 7.0 compatibility with 100% pass rate on official test suite.
+* Support for multiple `FILE` tags in `OBJE` records.
+* Improved `NAME` tag preservation with `rawName` support.
+* Enhanced `SNOTE` (shared notes) support across all entities.
+* Fixed parser regressions and improved lossless synchronization.
+
 ## 0.0.5
 
 * Added support for BLOB objects in GEDCOM 5.5.

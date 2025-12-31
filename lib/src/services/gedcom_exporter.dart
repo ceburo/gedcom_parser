@@ -1,6 +1,8 @@
 import 'package:gedcom_parser/src/entities/gedcom_data.dart';
 import 'package:gedcom_parser/src/entities/gedcom_node.dart';
 import 'package:gedcom_parser/src/entities/source_citation.dart';
+import 'package:gedcom_parser/src/services/gedcom_sync_service.dart';
+import 'package:gedcom_parser/src/utils/gedcom_string_utils.dart';
 
 /// A service for exporting [GedcomData] back to GEDCOM format.
 class GedcomExporter {
@@ -11,8 +13,9 @@ class GedcomExporter {
   /// will be generated from the structured entities.
   String export(GedcomData data) {
     if (data.nodes.isNotEmpty) {
+      final syncedData = GedcomSyncService().syncGedcomData(data);
       final buffer = StringBuffer();
-      for (final node in data.nodes) {
+      for (final node in syncedData.nodes) {
         _writeNode(buffer, node);
       }
       return buffer.toString();
@@ -31,15 +34,22 @@ class GedcomExporter {
     // Individuals
     for (final person in data.persons.values) {
       buffer.writeln("0 @${person.id}@ INDI");
-      buffer.writeln("1 NAME ${person.firstName} /${person.lastName}/");
+      final name = GedcomStringUtils.escapeText(
+          "${person.firstName} /${person.lastName}/");
+      buffer.writeln("1 NAME $name");
       buffer.writeln("1 SEX ${person.sex}");
 
       if (person.occupation != null) {
-        buffer.writeln("1 OCCU ${person.occupation}");
+        buffer.writeln(
+            "1 OCCU ${GedcomStringUtils.escapeText(person.occupation!)}");
       }
 
       for (final note in person.notes) {
-        buffer.writeln("1 NOTE $note");
+        buffer.writeln("1 NOTE ${GedcomStringUtils.escapeText(note)}");
+      }
+
+      for (final noteId in person.sharedNoteIds) {
+        buffer.writeln("1 SNOTE @$noteId@");
       }
 
       for (final mediaId in person.mediaIds) {
@@ -133,12 +143,22 @@ class GedcomExporter {
       }
 
       for (final note in family.notes) {
-        buffer.writeln("1 NOTE $note");
+        buffer.writeln("1 NOTE ${GedcomStringUtils.escapeText(note)}");
+      }
+
+      for (final noteId in family.sharedNoteIds) {
+        buffer.writeln("1 SNOTE @$noteId@");
       }
 
       for (final mediaId in family.mediaIds) {
         buffer.writeln("1 OBJE @$mediaId@");
       }
+    }
+
+    // Shared Notes
+    for (final note in data.sharedNotes.values) {
+      buffer.writeln(
+          "0 @${note.id}@ SNOTE ${GedcomStringUtils.escapeText(note.text)}");
     }
 
     // Repositories
@@ -187,8 +207,11 @@ class GedcomExporter {
       if (m.title != null) {
         buffer.writeln("1 TITL ${m.title}");
       }
-      if (m.description != null) {
-        buffer.writeln("1 NOTE ${m.description}");
+      for (final note in m.notes) {
+        buffer.writeln("1 NOTE ${GedcomStringUtils.escapeText(note)}");
+      }
+      for (final noteId in m.sharedNoteIds) {
+        buffer.writeln("1 SNOTE @$noteId@");
       }
     }
 
@@ -203,16 +226,20 @@ class GedcomExporter {
     int level,
     SourceCitation citation,
   ) {
-    buffer.writeln("$level SOUR @${citation.sourceId}@");
+    final sourceXref = GedcomStringUtils.escapePointer(citation.sourceId);
+    buffer.writeln("$level SOUR $sourceXref");
     if (citation.page != null) {
-      buffer.writeln("${level + 1} PAGE ${citation.page}");
+      buffer.writeln(
+          "${level + 1} PAGE ${GedcomStringUtils.escapeText(citation.page!)}");
     }
     if (citation.quality != null) {
-      buffer.writeln("${level + 1} QUAY ${citation.quality}");
+      buffer.writeln(
+          "${level + 1} QUAY ${GedcomStringUtils.escapeText(citation.quality!)}");
     }
     if (citation.text != null) {
       buffer.writeln("${level + 1} DATA");
-      buffer.writeln("${level + 2} TEXT ${citation.text}");
+      buffer.writeln(
+          "${level + 2} TEXT ${GedcomStringUtils.escapeText(citation.text!)}");
     }
     for (final mediaId in citation.mediaIds) {
       buffer.writeln("${level + 1} OBJE @$mediaId@");

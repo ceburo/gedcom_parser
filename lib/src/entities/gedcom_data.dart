@@ -1,3 +1,4 @@
+import 'package:gedcom_parser/src/entities/shared_note.dart';
 import 'package:gedcom_parser/src/utils/gedcom_date_parser.dart';
 import 'package:gedcom_parser/src/entities/family.dart';
 import 'package:gedcom_parser/src/entities/gedcom_node.dart';
@@ -23,6 +24,9 @@ class GedcomData extends Equatable {
 
   /// Map of media IDs to [Media] objects.
   final Map<String, Media> media;
+
+  /// Map of shared note IDs to [SharedNote] objects.
+  final Map<String, SharedNote> sharedNotes;
 
   /// The ID of the person designated as SOSA 1 (the root of the tree).
   final String? sosa1Id;
@@ -78,6 +82,7 @@ class GedcomData extends Equatable {
     this.sources = const {},
     this.repositories = const {},
     this.media = const {},
+    this.sharedNotes = const {},
     this.sosa1Id,
     this.sosaNumbers = const {},
     this.childToFamilyId = const {},
@@ -90,6 +95,7 @@ class GedcomData extends Equatable {
     Map<String, Source>? sources,
     Map<String, Repository>? repositories,
     Map<String, Media>? media,
+    Map<String, SharedNote>? sharedNotes,
     String? sosa1Id,
     Map<String, int>? sosaNumbers,
     Map<String, String>? childToFamilyId,
@@ -101,6 +107,7 @@ class GedcomData extends Equatable {
         sources: sources ?? this.sources,
         repositories: repositories ?? this.repositories,
         media: media ?? this.media,
+        sharedNotes: sharedNotes ?? this.sharedNotes,
         sosa1Id: sosa1Id ?? this.sosa1Id,
         sosaNumbers: sosaNumbers ?? this.sosaNumbers,
         childToFamilyId: childToFamilyId ?? this.childToFamilyId,
@@ -148,6 +155,7 @@ class GedcomData extends Equatable {
         sources,
         repositories,
         media,
+        sharedNotes,
         sosa1Id,
         sosaNumbers,
         childToFamilyId,

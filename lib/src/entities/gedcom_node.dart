@@ -1,4 +1,5 @@
 import 'package:equatable/equatable.dart';
+import 'package:gedcom_parser/src/utils/gedcom_string_utils.dart';
 
 /// Represents a single line and its children in a GEDCOM file.
 /// This allows for lossless storage of all GEDCOM data, including
@@ -32,12 +33,12 @@ class GedcomNode extends Equatable {
 
   /// Returns the value of this node, including any CONT/CONC children.
   String get valueWithChildren {
-    var result = value ?? "";
+    var result = GedcomStringUtils.unescapeText(value) ?? "";
     for (final child in children) {
       if (child.tag == "CONT") {
-        result += "\n${child.value ?? ""}";
+        result += "\n${GedcomStringUtils.unescapeText(child.value) ?? ""}";
       } else if (child.tag == "CONC") {
-        result += child.value ?? "";
+        result += GedcomStringUtils.unescapeText(child.value) ?? "";
       }
     }
     return result;

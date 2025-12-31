@@ -4,7 +4,7 @@ A standalone Dart package for parsing, manipulating, and exporting GEDCOM files.
 
 ## Features
 
-- **Standard Support**: Full support for GEDCOM 5.5.1 and 7.0.
+- **Standard Support**: Full support for GEDCOM 5.5.1 and 7.0 (100% pass rate on official test suite).
 - **Embedded BLOB Support**: Support for embedded binary data (BLOB) in GEDCOM 5.5.
 - **Lossless Export**: Synchronize structured entities with raw GEDCOM nodes for lossless export.
 - **Rich Data Model**: Support for individuals, families, sources, repositories, and media.

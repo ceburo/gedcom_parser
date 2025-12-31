@@ -25,6 +25,9 @@ class Family extends Equatable {
   /// Additional notes or comments about the family.
   final List<String> notes;
 
+  /// List of shared note IDs associated with this family.
+  final List<String> sharedNoteIds;
+
   /// List of source citations for the marriage event.
   final List<SourceCitation> marriageSources;
 
@@ -42,6 +45,7 @@ class Family extends Equatable {
     this.marriageDate,
     this.marriagePlace,
     this.notes = const [],
+    this.sharedNoteIds = const [],
     this.marriageSources = const [],
     this.mediaIds = const [],
     this.nodes = const [],
@@ -56,6 +60,7 @@ class Family extends Equatable {
         marriageDate,
         marriagePlace,
         notes,
+        sharedNoteIds,
         marriageSources,
         mediaIds,
         nodes,
@@ -69,6 +74,7 @@ class Family extends Equatable {
     String? marriageDate,
     String? marriagePlace,
     List<String>? notes,
+    List<String>? sharedNoteIds,
     List<SourceCitation>? marriageSources,
     List<String>? mediaIds,
     List<GedcomNode>? nodes,
@@ -81,6 +87,7 @@ class Family extends Equatable {
         marriageDate: marriageDate ?? this.marriageDate,
         marriagePlace: marriagePlace ?? this.marriagePlace,
         notes: notes ?? this.notes,
+        sharedNoteIds: sharedNoteIds ?? this.sharedNoteIds,
         marriageSources: marriageSources ?? this.marriageSources,
         mediaIds: mediaIds ?? this.mediaIds,
         nodes: nodes ?? this.nodes,
