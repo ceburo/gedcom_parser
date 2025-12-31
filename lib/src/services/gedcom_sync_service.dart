@@ -452,6 +452,15 @@ class GedcomSyncService {
     final index = nodes.indexWhere((n) => n.tag == tag);
     if (value == null || value.isEmpty) {
       if (index != -1) {
+        // Don't remove if it has children that are not CONT/CONC
+        // This ensures we don't lose structured data (like ADDR with ADR1, CITY, etc.)
+        // that isn't fully mapped to our entity model.
+        final node = nodes[index];
+        final hasImportantChildren =
+            node.children.any((c) => c.tag != "CONT" && c.tag != "CONC");
+        if (hasImportantChildren) {
+          return nodes;
+        }
         return List<GedcomNode>.from(nodes)..removeAt(index);
       }
       return nodes;

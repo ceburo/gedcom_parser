@@ -1,3 +1,11 @@
+## 0.0.7
+
+* Improved GEDCOM 5.5.1 compatibility (fixed `OCCU` and `FORM` tag handling).
+* Enhanced lossless export to preserve structured address data (`ADDR` with sub-tags).
+* Added support for UTF-16 encoded GEDCOM files in the test suite.
+* Refactored test suite into separate files for GEDCOM 5 and 7.
+* Added more compatibility tests for GEDCOM 5.
+
 ## 0.0.6
 
 * Full GEDCOM 7.0 compatibility with 100% pass rate on official test suite.

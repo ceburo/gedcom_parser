@@ -229,7 +229,6 @@ class GedcomParser {
           }
           break;
         case "OCCU":
-          if (occupation != null) break;
           occupation = child.valueWithChildren;
           break;
         case "NOTE":
@@ -469,6 +468,19 @@ class GedcomParser {
             }
           }
           files.add(MediaFile(path: path, format: format));
+          break;
+        case "FORM":
+          if (files.isEmpty) {
+            files.add(MediaFile(
+                path: "", format: GedcomStringUtils.unescapeText(child.value)));
+          } else {
+            // If we already have files, this FORM might be for the first one if it didn't have one
+            // but usually FORM follows FILE. In GEDCOM 5.5 BLOB, FORM is a child of OBJE.
+            final first = files.first;
+            files[0] = MediaFile(
+                path: first.path,
+                format: GedcomStringUtils.unescapeText(child.value));
+          }
           break;
         case "TITL":
           title = child.valueWithChildren;

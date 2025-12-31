@@ -9,20 +9,20 @@ void main() {
   final parser = GedcomParser();
   final exporter = GedcomExporter();
 
-  final testDir = Directory('test/src/7');
-  if (!testDir.existsSync()) {
-    print('Warning: test/src/7 directory not found.');
+  final test5Dir = Directory('test/src/5');
+  if (!test5Dir.existsSync()) {
+    print('Warning: test/src/5 directory not found.');
     return;
   }
 
-  final files = testDir
+  final files5 = test5Dir
       .listSync()
       .whereType<File>()
       .where((f) => f.path.endsWith('.ged'))
       .toList();
 
-  group('GEDCOM 7.0 Compatibility Tests', () {
-    for (final file in files) {
+  group('GEDCOM 5.5 Compatibility Tests', () {
+    for (final file in files5) {
       final fileName = p.basename(file.path);
 
       test('Round-trip: $fileName', () {
