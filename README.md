@@ -44,6 +44,25 @@ dependencies:
   gedcom_parser: ^0.0.1
 ```
 
+## Publishing
+
+This package uses GitHub Actions for automated publishing. To publish a new version:
+1. Update the version in `pubspec.yaml` and `CHANGELOG.md`.
+2. Push a tag starting with `v` (e.g., `v0.0.5`).
+3. The GitHub Action will automatically run tests and publish to pub.dev using OIDC.
+
+## Contributing
+
+Contributions are welcome! Please feel free to submit a Pull Request.
+
+1. Fork the repository.
+2. Create your feature branch (`git checkout -b feature/AmazingFeature`).
+3. Commit your changes (`git commit -m 'Add some AmazingFeature'`).
+4. Push to the branch (`git push origin feature/AmazingFeature`).
+5. Open a Pull Request.
+
+Please make sure to update tests as appropriate and follow the Dart style guide.
+
 ## License
 
 This project is licensed under the BSD 3-Clause License - see the [LICENSE](LICENSE) file for details.
