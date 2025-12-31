@@ -36,7 +36,8 @@ void main() {
   final data = parser.parseLines(gedcomLines);
 
   // Access the parsed data
-  print('Parsed ${data.persons.length} persons and ${data.families.length} families.');
+  print(
+      'Parsed ${data.persons.length} persons and ${data.families.length} families.');
 
   // Print details of each person
   for (final person in data.persons.values) {

@@ -1,12 +1,39 @@
 import 'package:gedcom_parser/src/services/gedcom_parser.dart';
+import 'package:gedcom_parser/src/services/gedcom_exporter.dart';
 import 'package:gedcom_parser/src/entities/source_citation.dart';
 import 'package:test/test.dart';
 
 void main() {
   late GedcomParser parser;
+  late GedcomExporter exporter;
 
   setUp(() {
     parser = GedcomParser();
+    exporter = GedcomExporter();
+  });
+
+  test('should parse and export media with BLOB data (lossless)', () {
+    final lines = [
+      "0 @O1@ OBJE",
+      "1 FORM jpg",
+      "1 TITL A picture",
+      "1 BLOB",
+      "2 CONT /9j/4AAQSkZJRgABAQEASABIAAD/4QA6RXhpZgAATU0AKgAAAAgAAwEAAAMAAAABAAEAAA",
+      "2 CONT EbAAEAAAABAAEAAAAAAAD/2wBDAAIBAQIBAQICAgICAgICAwUDAwMDAwYEBAMFBwYHBwcG",
+    ];
+
+    final data = parser.parseLines(lines);
+    final exported = exporter.export(data);
+
+    expect(exported, contains("1 BLOB"));
+    expect(
+        exported,
+        contains(
+            "2 CONT /9j/4AAQSkZJRgABAQEASABIAAD/4QA6RXhpZgAATU0AKgAAAAgAAwEAAAMAAAABAAEAAA"));
+    expect(
+        exported,
+        contains(
+            "2 CONT EbAAEAAAABAAEAAAAAAAD/2wBDAAIBAQIBAQICAgICAgICAwUDAwMDAwYEBAMFBwYHBwcG"));
   });
 
   test('should parse a simple individual', () {
@@ -35,6 +62,37 @@ void main() {
     final person = data.persons['I1'];
     expect(person!.birthDate, "1 JAN 1980");
     expect(person.birthPlace, "Springfield");
+  });
+
+  test('should parse media with BLOB data (GEDCOM 5.5)', () {
+    final lines = [
+      "0 @O1@ OBJE",
+      "1 FORM jpg",
+      "1 TITL A picture",
+      "1 BLOB",
+      "2 CONT /9j/4AAQSkZJRgABAQEASABIAAD/4QA6RXhpZgAATU0AKgAAAAgAAwEAAAMAAAABAAEAAA",
+      "2 CONT EbAAEAAAABAAEAAAAAAAD/2wBDAAIBAQIBAQICAgICAgICAwUDAwMDAwYEBAMFBwYHBwcG",
+    ];
+
+    final data = parser.parseLines(lines);
+
+    expect(data.media.length, 1);
+    final media = data.media['O1'];
+    expect(media, isNotNull);
+    expect(media!.format, "jpg");
+    expect(media.title, "A picture");
+    expect(
+        media.blobData,
+        contains(
+            "/9j/4AAQSkZJRgABAQEASABIAAD/4QA6RXhpZgAATU0AKgAAAAgAAwEAAAMAAAABAAEAAA"));
+    expect(
+        media.blobData,
+        contains(
+            "EbAAEAAAABAAEAAAAAAAD/2wBDAAIBAQIBAQICAgICAgICAwUDAwMDAwYEBAMFBwYHBwcG"));
+
+    // Check decoded bytes
+    expect(media.blobBytes, isNotNull);
+    expect(media.blobBytes!.length, greaterThan(0));
   });
 
   test('should parse family and link children', () {

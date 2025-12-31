@@ -351,6 +351,7 @@ class GedcomParser {
     String? title;
     String? format;
     String? description;
+    String? blobData;
 
     for (final child in node.children) {
       switch (child.tag) {
@@ -362,6 +363,8 @@ class GedcomParser {
           format = child.value;
         case "NOTE":
           description = child.valueWithChildren;
+        case "BLOB":
+          blobData = child.valueWithChildren;
       }
     }
     return Media(
@@ -370,6 +373,7 @@ class GedcomParser {
       title: title,
       format: format,
       description: description,
+      blobData: blobData,
     );
   }
 
