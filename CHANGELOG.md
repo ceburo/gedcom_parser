@@ -1,3 +1,8 @@
+## 0.0.8
+
+* Integrated official GEDCOM 7.0 test files as a git submodule.
+* Updated test suite to use the latest official GEDCOM 7.0 samples.
+
 ## 0.0.7
 
 * Improved GEDCOM 5.5.1 compatibility (fixed `OCCU` and `FORM` tag handling).

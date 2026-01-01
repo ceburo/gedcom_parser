@@ -41,14 +41,14 @@ Add `gedcom_parser` to your `pubspec.yaml`:
 
 ```yaml
 dependencies:
-  gedcom_parser: ^0.0.7
+  gedcom_parser: ^0.0.8
 ```
 
 ## Publishing
 
 This package uses GitHub Actions for automated publishing. To publish a new version:
 1. Update the version in `pubspec.yaml` and `CHANGELOG.md`.
-2. Push a tag starting with `v` (e.g., `v0.0.7`).
+2. Push a tag starting with `v` (e.g., `v0.0.8`).
 3. The GitHub Action will automatically run tests and publish to pub.dev using OIDC.
 
 ## Contributing

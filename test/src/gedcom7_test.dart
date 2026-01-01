@@ -9,9 +9,9 @@ void main() {
   final parser = GedcomParser();
   final exporter = GedcomExporter();
 
-  final testDir = Directory('test/src/7');
+  final testDir = Directory('test/src/7/testfiles/gedcom70');
   if (!testDir.existsSync()) {
-    print('Warning: test/src/7 directory not found.');
+    print('Warning: test/src/7/testfiles/gedcom70 directory not found.');
     return;
   }
 

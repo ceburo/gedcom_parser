@@ -1,0 +1,3 @@
+[submodule "test/src/7"]
+	path = test/src/7
+	url = https://github.com/FamilySearch/GEDCOM.io.git
