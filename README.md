@@ -1,3 +1,11 @@
+[![Pub Version](https://img.shields.io/pub/v/gedcom_parser?color=blue)](https://pub.dev/packages/gedcom_parser)
+
+[![Pub Likes](https://img.shields.io/pub/likes/gedcom_parser?color=red)](https://pub.dev/packages/gedcom_parser)
+
+[![Pub Popularity](https://img.shields.io/pub/popularity/gedcom_parser?logo=dart)](https://pub.dev/packages/gedcom_parser)
+
+[![Pub Points](https://img.shields.io/pub/points/gedcom_parser?label=pub%20points&logo=dart)](https://pub.dev/packages/gedcom_parser)
+
 # GEDCOM Parser
 
 A standalone Dart package for parsing, manipulating, and exporting GEDCOM files. This package is designed to be fast, reliable, and compliant with GEDCOM standards.
